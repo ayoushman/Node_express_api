@@ -1,4 +1,5 @@
 const Bootcamp = require("../models/Bootcamp");
+const ErrorResponse = require("../utils/error");
 
 //  Lets make the controllers method for defferent routes now
 
@@ -6,12 +7,14 @@ const Bootcamp = require("../models/Bootcamp");
 //  @route /api/v1/bootcamps/
 // @ access PUBLIC
 
+// Now listen instead of taking try and catch block on each method what we can do is
+// make a async handler and pass these function in tht
 exports.getBootcamps = async (req, res, next) => {
   try {
     const bootcamps = await Bootcamp.find();
     res.status(200).json({ succes: "true", data: bootcamps });
   } catch (err) {
-    res.status(400).json({ succes: false, data: null });
+    next(err);
   }
 };
 
@@ -22,9 +25,18 @@ exports.getBootcamps = async (req, res, next) => {
 exports.getBootcamp = async (req, res, next) => {
   try {
     const bootcamp = await Bootcamp.findById(req.params.id);
+    if (!bootcamp) {
+      console.log(21);
+      return next(
+        new ErrorResponse(`Bootcamp not found of id ${req.params.id}`, 404)
+      );
+    }
     res.status(200).json({ succes: "true", data: bootcamp });
   } catch (err) {
-    res.status(400).json({ succes: false, data: null });
+    // res.status(400).json({ succes: false, data: null });
+    console.log(23);
+    // BY default it will send a 500 status and a html page with the error description
+    next(err);
   }
 };
 
@@ -36,7 +48,7 @@ exports.postBootcamps = async (req, res, next) => {
     const newBootCamp = await Bootcamp.create(req.body);
     res.status(200).json({ succes: "true", data: newBootCamp });
   } catch (error) {
-    res.status(400).json({ succes: false, data: null });
+    next(error);
   }
 };
 
@@ -45,14 +57,20 @@ exports.postBootcamps = async (req, res, next) => {
 // @ access Private
 
 exports.updateBootcamps = async (req, res, next) => {
-  const bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
-  if (!bootcamp) {
-    res.status(400).json({ succes: false });
+  try {
+    const bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!bootcamp) {
+      return next(
+        new ErrorResponse(`Bootcamp not found of id ${req.params.id}`, 404)
+      );
+    }
+    res.status(200).json({ succes: true, data: bootcamp });
+  } catch (error) {
+    next(error);
   }
-  res.status(200).json({ succes: true, data: bootcamp });
 };
 
 // @desc Delete bootcamps
@@ -60,9 +78,15 @@ exports.updateBootcamps = async (req, res, next) => {
 // @ access Private
 
 exports.deleteBootcamps = async (req, res, next) => {
-  const bootcamp = await Bootcamp.findByIdAndRemove(req.params.id);
-  if (!bootcamp) {
-    res.status(404).json({ success: false });
+  try {
+    const bootcamp = await Bootcamp.findByIdAndRemove(req.params.id);
+    if (!bootcamp) {
+      return next(
+        new ErrorResponse(`Bootcamp not found of id ${req.params.id}`, 404)
+      );
+    }
+    res.status(200).json({ succes: true, data: {} });
+  } catch (error) {
+    next(error);
   }
-  res.status(200).json({ succes: true, data: {} });
 };

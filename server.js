@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 const bootcamps = require("./routes/bootcamps");
 const connectDB = require("./config/db");
 
-// const ErrorHandler = require("./middleware/ErrorHandler");
+const ErrorHandler = require("./middleware/Error");
 
 // const { logger } = require("./middleware/logger");
 
@@ -26,7 +26,7 @@ app.use(express.json());
 // }
 
 app.use("/api/v1/bootcamps", bootcamps);
-// app.use(ErrorHandler);
+app.use(ErrorHandler);
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`.yellow.bold);
 });
