@@ -1,4 +1,9 @@
 const mongoose = require("mongoose");
+const slugify = require("slugify");
+const geodcoder = require("../utils/geocoder");
+const { Geocoder } = require("../utils/geocoder");
+const dotenv = require("dotenv");
+const geocoder = require("../utils/geocoder");
 
 const EmailExpression =
   /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
@@ -6,6 +11,7 @@ const EmailExpression =
 const URLexpression =
   /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
 
+dotenv.config({ path: "../config/config.env" });
 const BootcampSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -41,15 +47,14 @@ const BootcampSchema = new mongoose.Schema({
   },
 
   // GeoJson format
-  /* location: {
+  location: {
     type: {
       type: String, // Don't do `{ location: { type: String } }`
       enum: ["Point"], // 'location.type' must be 'Point'
-      required: true,
     },
     coordinates: {
       type: [Number],
-      required: true,
+
       index: "2dsphere",
     },
     // Stuff from the mapQuest API
@@ -59,7 +64,7 @@ const BootcampSchema = new mongoose.Schema({
     State: String,
     zipcode: String,
     country: String,
-  },*/
+  },
   careers: {
     type: [String],
     enum: [
@@ -106,4 +111,33 @@ const BootcampSchema = new mongoose.Schema({
   },
 });
 
+// Create Bootcamp slug
+// Now here we dont want to create  a arrow function coz they handle "this" scope differently
+BootcampSchema.pre("save", function (next) {
+  console.log("Slugifyy ran ", this.name);
+  this.slug = slugify(this.name, { lower: true });
+  console.log(process.env.GEOCODER_PROVIDER);
+  next();
+});
+
+// Geocoder & Create coordiantes field
+
+BootcampSchema.pre("save", async function (next) {
+  const loc = await geodcoder.geocode(this.address);
+  this.location = {
+    type: "Point",
+    coordinates: [loc[0].longitude, loc[0].latitude],
+    formattedAddress: loc[0].formattedAddress,
+    street: loc[0].streetName,
+    city: loc[0].city,
+    state: loc[0].stateCode,
+    zipcode: loc[0].zipcode,
+    country: loc[0].countryCode,
+  };
+
+  // Do not save address in DB
+  this.address = undefined;
+  next();
+  // Now we have this much data so need  to save address in db
+});
 module.exports = mongoose.model("Bootcamp", BootcampSchema);
