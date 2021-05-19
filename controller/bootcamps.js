@@ -1,7 +1,8 @@
 const Bootcamp = require("../models/Bootcamp");
 const ErrorResponse = require("../utils/error");
-
+const geocoder = require("../utils/geocoder");
 const asyncHandler = require("../middleware/asyncHandler");
+const { geocode } = require("../utils/geocoder");
 
 /* Lets make the controllers method for defferent routes now
 
@@ -27,9 +28,10 @@ exports.getBootcamps = async (req, res, next) => {
 
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
   const bootcamps = await Bootcamp.find();
+  console.log(Bootcamp.length);
   res
     .status(200)
-    .json({ succes: "true", count: Bootcamp.length, data: bootcamps });
+    .json({ succes: "true", count: bootcamps.length, data: bootcamps });
 });
 
 // @desc Get Single bootcamp
@@ -59,6 +61,7 @@ exports.getBootcamp = async (req, res, next) => {
 
 exports.getBootcamp = asyncHandler(async (req, res, next) => {
   const bootcamp = await Bootcamp.findById(req.params.id);
+
   if (!bootcamp) {
     console.log(21);
     return next(
@@ -107,4 +110,30 @@ exports.deleteBootcamps = asyncHandler(async (req, res, next) => {
     );
   }
   res.status(200).json({ succes: true, data: {} });
+});
+
+// @desc To GET Bootcamps within ceratin radius
+// @route radius/:zipcode/:radius
+
+exports.getBootCampsWithinRadius = asyncHandler(async (req, res, next) => {
+  const { zipcode, distance } = req.params;
+  // Lets get the longitude and latitude from geocoder
+
+  const loc = await geocoder.geocode(zipcode);
+  const lat = loc[0].latitude;
+  const long = loc[0].longitude;
+
+  // Calculate radius using radius
+  // Dive dist by earths radius
+  // Earth radius in miles = 3663 miles / 6378km
+
+  const radius = distance / 3663;
+
+  const bootcamp = await Bootcamp.find({
+    location: { $geoWithin: { $centerSphere: [[long, lat], radius] } },
+  });
+
+  res
+    .status(200)
+    .json({ succes: true, count: bootcamp.length, data: bootcamp });
 });
