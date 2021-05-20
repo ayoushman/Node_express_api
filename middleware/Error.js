@@ -14,7 +14,7 @@ const ErrorHandler = (err, req, res, next) => {
   }
   //   Mongoose duplicate key
   if (err.code === 11000) {
-    const message = `Aldready have a bootcamp of name ${err.keyValue.name}`;
+    const message = `Already have a bootcamp of name ${err.keyValue.name}`;
     error = new ErrorResponse(message, 404);
   }
 

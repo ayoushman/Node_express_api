@@ -3,6 +3,7 @@ const colors = require("colors");
 const dotenv = require("dotenv");
 
 const bootcamps = require("./routes/bootcamps");
+const courses = require("./routes/courses");
 const connectDB = require("./config/db");
 
 const ErrorHandler = require("./middleware/Error");
@@ -26,6 +27,7 @@ app.use(express.json());
 // }
 
 app.use("/api/v1/bootcamps", bootcamps);
+app.use("/api/v1/courses", courses);
 app.use(ErrorHandler);
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`.yellow.bold);
