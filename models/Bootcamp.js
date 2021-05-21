@@ -149,6 +149,13 @@ BootcampSchema.pre("save", async function (next) {
   // Now we have this much data so need  to save address in db
 });
 
+// Delete courses  when its bootcamp gets deleted
+BootcampSchema.pre("remove", async function (next) {
+  console.log(`Courses being removed of bootccamp ${this._id}`);
+  await this.model("Course").deleteMany({
+    bootcamp: this._id,
+  }); /*Only delete courses  that are part of the bootcamp*/
+});
 // Reverse populate with virtuals
 BootcampSchema.virtual("courses", {
   ref: "Course",
@@ -156,4 +163,5 @@ BootcampSchema.virtual("courses", {
   foreignField: "bootcamp",
   justOne: false,
 });
+
 module.exports = mongoose.model("Bootcamp", BootcampSchema);
