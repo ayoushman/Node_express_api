@@ -49,4 +49,40 @@ as a special field and for type we need special mongoose type
   },
 });
 
+// Static method to get avg of course tuitions
+CourseSchema.statics.getAverageCost = async function (bootcampId) {
+  const obj = await this.aggregate([
+    {
+      $match: { bootcamp: bootcampId },
+    },
+    {
+      $group: {
+        _id: "$bootcamp",
+        averageCost: { $avg: "$tuition" },
+      },
+    },
+  ]);
+
+  console.log(obj);
+
+  try {
+    await this.model("Bootcamp").findByIdAndUpdate(bootcampId, {
+      averageCost: Math.floor(obj[0].averageCost),
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+// Get average cost after saves
+
+CourseSchema.post("save", function () {
+  this.constructor.getAverageCost(this.bootcamp);
+});
+// Call average cost before remove
+
+CourseSchema.pre("remove", function () {
+  this.constructor.getAverageCost(this.bootcamp);
+});
+
 module.exports = mongoose.model("Course", CourseSchema);

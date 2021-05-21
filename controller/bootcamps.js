@@ -1,8 +1,13 @@
+const path = require("path");
 const Bootcamp = require("../models/Bootcamp");
 const ErrorResponse = require("../utils/error");
 const geocoder = require("../utils/geocoder");
 const asyncHandler = require("../middleware/asyncHandler");
 const { geocode } = require("../utils/geocoder");
+
+const MAX_FILE_UPLOAD_SIZE = 1000000;
+
+const FILE_PATH = "./public/uploads";
 
 /* Lets make the controllers method for defferent routes now
 
@@ -118,6 +123,52 @@ exports.deleteBootcamps = asyncHandler(async (req, res, next) => {
   }
   bootcamp.remove();
   res.status(200).json({ succes: true, data: {} });
+});
+
+// @desc To PUT req and upload a image in the bootcamp
+// @route PUT /api/v1/bootcamps/:id/photo
+exports.uploadImageBootcamp = asyncHandler(async (req, res, next) => {
+  const bootcamp = await Bootcamp.findById(req.params.id);
+
+  if (!bootcamp) {
+    return next(
+      new ErrorResponse(`Bootcamp not found of id ${req.params.id}`, 404)
+    );
+  }
+
+  if (!req.files) {
+    return next(new ErrorResponse(`Please uplaod an image `, 400));
+  }
+
+  const file = req.files.file;
+  // file is a image
+
+  if (!file.mimetype.startsWith("image")) {
+    return next(new ErrorResponse(`Please uplaod an image file type`, 400));
+  }
+  // Check File size
+  if (!file.size > MAX_FILE_UPLOAD_SIZE) {
+    return next(
+      new ErrorResponse(`Please uplaod an image less than 1 mb`, 400)
+    );
+  }
+
+  // Create custom file name as if someone else upload an image wwith the same name itt will be overwrite
+  // to get the file extension we use path
+  file.name = `photo_${bootcamp._id}${path.parse(file.name).ext}`;
+  // Upload file to the current path
+  file.mv(`${FILE_PATH}/${file.name}`, async (err) => {
+    if (err) {
+      console.log(err);
+      return next(new ErrorResponse(`Problem in uploading the image`, 500));
+    }
+
+    await Bootcamp.findByIdAndUpdate(req.params.id, { photo: file.name });
+
+    res.status(200).json({ success: true, data: file.name });
+  });
+
+  console.log(file.name);
 });
 
 // @desc To GET Bootcamps within ceratin radius

@@ -1,6 +1,8 @@
+const path = require("path");
 const express = require("express");
 const colors = require("colors");
 const dotenv = require("dotenv");
+const fileUpload = require("express-fileupload");
 
 const bootcamps = require("./routes/bootcamps");
 const courses = require("./routes/courses");
@@ -26,6 +28,14 @@ app.use(express.json());
 //   app.use(morgan("dev"));
 // }
 
+// Set static folder
+app.use(express.static(path.join(__dirname, "public")));
+
+// File uploader
+
+app.use(fileUpload());
+
+// Routes
 app.use("/api/v1/bootcamps", bootcamps);
 app.use("/api/v1/courses", courses);
 app.use(ErrorHandler);
