@@ -14,28 +14,19 @@ const Bootcamp = require("../models/Bootcamp");
 // this was easy now it will be the hard part where we need to show array of courses inside the bootcamps
 // For that we will be needing virtuals
 exports.getCourses = asyncHandler(async (req, res, next) => {
-  let query;
   if (req.params.bootcampId) {
-    // query = Course.find({ bootcamp: req.params.bootcampId }).populate(
-    //   "bootcamp"
-    // );
+    const course = await Course.find({ bootcamp: req.params.bootcampId });
 
-    // for specific values from bootcamp
-
-    query = Course.find({ bootcamp: req.params.bootcampId }).populate({
-      path: "bootcamp",
-      select: "name description",
+    res.status(200).json({
+      success: true,
+      count: course.length,
+      data: course,
     });
   } else {
-    query = Course.find().populate("bootcamp").populate({
-      path: "bootcamp",
-      select: "name description",
-    });
+    res.status(200).json(res.advancedResults);
   }
 
-  const courses = await query;
-
-  res.status(200).json({ success: true, count: courses.length, data: courses });
+  // for specific values from bootcamp
 });
 
 /*  @desc Get Single Course
