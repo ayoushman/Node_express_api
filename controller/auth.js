@@ -51,6 +51,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 });
 
 const sendTokenResponse = (user, statusCode, res) => {
+  console.log("Heya");
   const token = user.getSignedJwtToken();
   const options = {
     expires: new Date(
@@ -61,6 +62,6 @@ const sendTokenResponse = (user, statusCode, res) => {
 
   res
     .status(statusCode)
-    .cookies("token", token, options)
+    .cookie("token", token, options)
     .json({ success: true, token: token });
 };

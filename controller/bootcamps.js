@@ -78,6 +78,23 @@ exports.getBootcamp = asyncHandler(async (req, res, next) => {
 // @ access Private
 
 exports.postBootcamps = asyncHandler(async (req, res, next) => {
+  // NOw as you know we aint gonna submit the user id in the body therefore we must get that from other way
+  // and that way will be the middleware Protect where we confirm the user id
+
+  // Check for published bootcamps by the publisher
+
+  const publishedBootcamps = await Bootcamp.findOne({ user: req.user.id });
+  // Now if a user is not an admin it can only submit one bootcamp
+
+  if (publishedBootcamps && req.user.role !== "admin") {
+    return next(
+      new ErrorResponse(
+        `heya u glutton , cant add more bootcamps ya bitch ${req.user.id}`,
+        400
+      )
+    );
+  }
+  req.body.user = req.user.id;
   const newBootCamp = await Bootcamp.create(req.body);
   res.status(200).json({ succes: "true", data: newBootCamp });
 });
